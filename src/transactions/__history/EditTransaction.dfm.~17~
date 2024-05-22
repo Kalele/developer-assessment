@@ -1,0 +1,94 @@
+object FEditTransactions: TFEditTransactions
+  Left = 0
+  Top = 0
+  Caption = 'Edit Transactions'
+  ClientHeight = 157
+  ClientWidth = 445
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  OnCreate = FormCreate
+  TextHeight = 15
+  object Label1: TLabel
+    Left = 8
+    Top = 8
+    Width = 92
+    Height = 15
+    Caption = 'Transaction date: '
+  end
+  object Label2: TLabel
+    Left = 8
+    Top = 37
+    Width = 108
+    Height = 15
+    Caption = 'Transaction amount:'
+  end
+  object Label3: TLabel
+    Left = 8
+    Top = 66
+    Width = 115
+    Height = 15
+    Caption = 'Transaction reference:'
+  end
+  object Label4: TLabel
+    Left = 8
+    Top = 95
+    Width = 89
+    Height = 15
+    Caption = 'Transaction type:'
+  end
+  object edtReference: TDBEdit
+    Left = 168
+    Top = 63
+    Width = 265
+    Height = 23
+    DataField = 'Amount'
+    TabOrder = 0
+  end
+  object edtType: TDBEdit
+    Left = 168
+    Top = 92
+    Width = 265
+    Height = 23
+    DataField = 'Account'
+    TabOrder = 1
+  end
+  object edtAmount: TDBEdit
+    Left = 168
+    Top = 34
+    Width = 265
+    Height = 23
+    DataField = 'DC'
+    TabOrder = 2
+  end
+  object Button1: TButton
+    Left = 358
+    Top = 121
+    Width = 75
+    Height = 25
+    Caption = 'Confirm'
+    TabOrder = 3
+    OnClick = btnConfirmClick
+  end
+  object Button2: TButton
+    Left = 272
+    Top = 121
+    Width = 75
+    Height = 25
+    Caption = 'Cancel'
+    TabOrder = 4
+    OnClick = btnCancelClick
+  end
+  object dtpDate: TDateTimePicker
+    Left = 168
+    Top = 8
+    Width = 265
+    Height = 23
+    Date = 45433.000000000000000000
+    Time = 0.088661180554481690
+    TabOrder = 5
+  end
+end

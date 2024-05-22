@@ -1,0 +1,88 @@
+unit EditTransaction;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Mask, Vcl.ExtCtrls, Datamodule,
+  Vcl.DBCtrls, Data.DB, Vcl.ComCtrls;
+
+type
+  TFEditTransactions = class(TForm)
+    edtReference: TDBEdit;
+    Label1: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
+    Label4: TLabel;
+    edtType: TDBEdit;
+    edtAmount: TDBEdit;
+    Button1: TButton;
+    Button2: TButton;
+    dtpDate: TDateTimePicker;
+    procedure btnCancelClick(Sender: TObject);
+    procedure btnConfirmClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure dtpDateChange(Sender: TObject);
+  private
+    { Private declarations }
+    FIsAddMode: Boolean;
+  public
+    { Public declarations }
+    procedure Initialize(AddMode: Boolean);
+  end;
+
+var
+  FEditTransactions: TFEditTransactions;
+
+implementation
+
+{$R *.dfm}
+
+procedure TFEditTransactions.FormCreate(Sender: TObject);
+begin
+  Position := poScreenCenter;
+end;
+
+procedure TFEditTransactions.Initialize(AddMode: Boolean);
+begin
+  FIsAddMode := AddMode;
+  // Set up data bindings
+  edtAmount.DataSource := DataModule1.FdsTransactions;
+  edtAmount.DataField := 'Amount';
+  edtReference.DataSource := DataModule1.FdsTransactions;
+  edtReference.DataField := 'Account';
+  edtType.DataSource := DataModule1.FdsTransactions;
+  edtType.DataField := 'DC';
+
+  // If in add mode, append a new record, else edit the existing record
+  if FIsAddMode then
+    DataModule1.FTransactions.Append
+  else
+    DataModule1.FTransactions.Edit;
+
+  // Set up the initial value for the date field
+  dtpDate.Date := DataModule1.FdsTransactions.DataSet.FieldByName('Date').AsDateTime;
+end;
+
+procedure TFEditTransactions.btnCancelClick(Sender: TObject);
+begin
+  DataModule1.FTransactions.Cancel;
+  Close;
+end;
+
+procedure TFEditTransactions.btnConfirmClick(Sender: TObject);
+begin
+  // Post changes to the database
+  DataModule1.FTransactions.Post;
+  Close;
+end;
+
+procedure TFEditTransactions.dtpDateChange(Sender: TObject);
+begin
+  // Update the date field in the dataset whenever the date picker changes
+  DataModule1.FdsTransactions.DataSet.Edit;
+  DataModule1.FdsTransactions.DataSet.FieldByName('Date').AsDateTime := dtpDate.Date;
+end;
+
+end.
+

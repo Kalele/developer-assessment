@@ -1,0 +1,68 @@
+What is a pointer?
+
+A pointer is a variable that stores the memory address of an object. Pointers enable direct access to the memory location where data is stored, offering flexibility in memory management. In Delphi, pointers are frequently utilized for dynamically allocating memory. This can be achieved through the 'New' operator, which allocates memory for a single object, or the 'GetMem' function, which allocates memory for multiple objects or arbitrary data structures.
+----------------------------------------------------
+
+What is an ORM (Object Relational Model)?
+
+ORM is a concept/framework that seeks to bridge the gape between rational database model and OOP. In ORM data is represented as objects(with attributes and methods) just like objects in OOP. Relationship between objects is represented by OOP concepts like inheritance.
+----------------------------------------------------
+What is Object-Oriented Programming?
+
+OOP is a programming paradigm based on the concept of Objects(with attributes/properties and functions/behavior). In OOP Classes are blueprints for creating objects, through that an object is an instance of a class. Some of the principles promoted by OOP include: Encapsulation, Abstraction, Inheritance, Polymorphism and Modularity.
+----------------------------------------------------
+Would you use source control tools? If so, why?
+
+Yes, I do use, and will continue to use source control tools like Git. They're very useful to keep track of code changes in a structured way. They make it easy for developers to collaborate, keep tabs on revisions, and roll back to earlier versions if necessary. Plus, having a central repository for code boosts teamwork, accountability, and overall code quality. And features like branching, merging, and code reviews really help streamline the whole process.
+----------------------------------------------------
+What would you use a secondary thread for?
+
+Secondary threads are used for running time-consuming operations such as network requests without interfering with the ui/ux experience of the user and without interfering with the main thread, as they run parallel with the main thread.
+----------------------------------------------------
+
+What are the following examples of? MySQL, SQL Server, PostgreSQL
+
+They are relational database management systems, Software designed for managing and string structured data, typically organized in tables with rows and columns. RDBMSs use SQL (Structured Query Language) for querying and managing the data.
+----------------------------------------------------
+
+What kind of operators are used in the following statement if (a > b) { c = c + 5; }
+
+The given statement is an if statement. In the condition a greater than operator ">" is used, a Relational operators. In the code block an arithmetic operator "the plus sign" is used.
+----------------------------------------------------
+
+How would you apply exception handling in your application (in terms of frequency and specificity)?
+
+Excpetion handling is used to manage runtime errors, or exceptions that the application might experience during runtime. The intention is so that the application recover form errors, in a controlled manner. Expectation handling is applied where error are anticipated this include operations like I/O, Network communication and/or Database interactions. 
+----------------------------------------------------
+
+What is the difference between a compiler and an interpreter?
+
+A compiler translates source code written in a high-level programming language into machine code, which can be executed directly by the computer's hardware. The resulting compiled program is typically independent of the original source code and can be executed repeatedly without further translation. In contrast, an interpreter translates and executes source code line by line at runtime, without producing a separate executable file.
+----------------------------------------------------
+
+
+What is software scalability?
+
+Software scalability is the capacity of a software system to manage rising workloads or user numbers without notable drops in performance or reliability. This requires designing the system to allow for growth by adding resources like hardware, servers, or network bandwidth. Achieving scalability involves employing strategies such as load balancing, horizontal or vertical scaling, caching, and optimizing algorithms and data structures.
+
+----------------------------------------------------
+
+What is a recursive function? Provide an example and a use case.
+
+
+A recursive function is one that, in solving a problem, calls itself either directly or indirectly, thereby breaking down the problem into smaller, akin subproblems. Recursion comprises two key elements: the base case(s), responsible for terminating the recursive calls, and the recursive case(s), which decompose the problem and invoke the function anew. Here how the Fibonacci implementation with look like in delphi using recursion:
+
+function Fibonacci(n: Integer): Integer;
+begin
+  if n <= 1 then
+    Result := n
+  else
+    Result := Fibonacci(n - 1) + Fibonacci(n - 2);
+end;
+
+
+----------------------------------------------------
+Explain what is meant by “Building re-usable code”. Why is it important? And how can it be achieved?
+
+
+Writing reusable code means writing neat, well-organized code that you or someone else can easily use again and again in different parts of your app or even in other projects. Reusable improve code consistency across all your projects, It also improves time management as time wont be dedicated to solving a code problem whose solution already exists. This can be achieved by building libraries, modules, or classes with clear functions and interfaces.

@@ -1,0 +1,40 @@
+object DataModule1: TDataModule1
+  Height = 1080
+  Width = 1440
+  PixelsPerInch = 144
+  object Connection: TADOConnection
+    ConnectionString = 
+      'Provider=SQLOLEDB.1;Persist Security Info=False;User ID=sa;Initi' +
+      'al Catalog=TestDB;Data Source=DESKTOP-HMDQ685\NAMEDSQLSERVER;Use' +
+      ' Procedure for Prepare=1;Auto Translate=True;Packet Size=4096;Wo' +
+      'rkstation ID=DESKTOP-HMDQ685;Use Encryption for Data=False;Tag w' +
+      'ith column collation when possible=False'
+    Provider = 'SQLOLEDB.1'
+    Left = 48
+    Top = 48
+  end
+  object customers: TADOTable
+    Connection = Connection
+    CursorType = ctStatic
+    TableName = 'Customers'
+    Left = 216
+    Top = 48
+  end
+  object transactions: TADOTable
+    Connection = Connection
+    CursorType = ctStatic
+    TableName = 'Transactions'
+    Left = 56
+    Top = 192
+  end
+  object dsCustomers: TDataSource
+    DataSet = customers
+    Left = 208
+    Top = 192
+  end
+  object dsTransactions: TDataSource
+    DataSet = transactions
+    Left = 360
+    Top = 160
+  end
+end

@@ -1,0 +1,151 @@
+unit ShowEnquiries;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Data.DB, Vcl.Grids, Vcl.DBGrids,
+  DataModule;
+
+type
+  TFEnquiries = class(TForm)
+    grdCustomers: TDBGrid;
+    grdTransactions: TDBGrid;
+    btnDESCSort: TButton;
+    btnASCSort: TButton;
+    btnCNCLSort: TButton;
+    Label2: TLabel;
+    btnSearch: TButton;
+    edtSearch: TEdit;
+    Label1: TLabel;
+    Button1: TButton;
+    Button2: TButton;
+    Button3: TButton;
+    Label3: TLabel;
+    procedure grdCustomersCellClick(Column: TColumn);
+    procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure grdCustomersKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure btnSearchClick(Sender: TObject);
+    procedure btnASCSortClick(Sender: TObject);
+    procedure btnDESCSortClick(Sender: TObject);
+    procedure btnCNCLSortClick(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+  private
+    { Private declarations }
+    FInitialAccount: string;
+    procedure LoadTransactions(const Account: string);
+  public
+    { Public declarations }
+  end;
+
+var
+  FEnquiries: TFEnquiries;
+
+implementation
+
+{$R *.dfm}
+
+procedure TFEnquiries.btnASCSortClick(Sender: TObject);
+begin
+  DataModule1.FCustomers.Sort := 'Name ASC';
+  if not DataModule1.FCustomers.IsEmpty then
+    LoadTransactions(DataModule1.FCustomers.FieldByName('Account').AsString);
+end;
+
+procedure TFEnquiries.btnCNCLSortClick(Sender: TObject);
+begin
+  DataModule1.FCustomers.Sort := '';
+  if not DataModule1.FCustomers.IsEmpty then
+    LoadTransactions(DataModule1.FCustomers.FieldByName('Account').AsString);
+end;
+
+procedure TFEnquiries.btnDESCSortClick(Sender: TObject);
+begin
+  DataModule1.FCustomers.Sort := 'Name DESC';
+  if not DataModule1.FCustomers.IsEmpty then
+    LoadTransactions(DataModule1.FCustomers.FieldByName('Account').AsString);
+end;
+
+procedure TFEnquiries.btnSearchClick(Sender: TObject);
+begin
+  DataModule1.FCustomers.Close;
+  if edtSearch.Text <> '' then
+    DataModule1.FCustomers.Filter := 'Account =' + QuotedStr(edtSearch.Text)
+  else
+    DataModule1.FCustomers.Filter := '';
+
+  DataModule1.FCustomers.Filtered := True;
+  DataModule1.FCustomers.Open;
+
+ if not DataModule1.FCustomers.IsEmpty then
+    LoadTransactions(DataModule1.FCustomers.FieldByName('Account').AsString);
+
+end;
+
+procedure TFEnquiries.Button1Click(Sender: TObject);
+begin
+  DataModule1.FTransactions.Sort := 'Date DESC';
+end;
+
+procedure TFEnquiries.Button2Click(Sender: TObject);
+begin
+  DataModule1.FTransactions.Sort := 'Date ASC';
+end;
+
+procedure TFEnquiries.Button3Click(Sender: TObject);
+begin
+  DataModule1.FTransactions.Sort := '';
+end;
+
+procedure TFEnquiries.FormCreate(Sender: TObject);
+begin
+  if not DataModule1.FCustomers.IsEmpty then
+  begin
+    FInitialAccount := DataModule1.FCustomers.FieldByName('Account').AsString;
+    LoadTransactions(FInitialAccount);
+  end;
+
+   grdTransactions.DataSource := DataModule1.FdsTransactions;
+   grdCustomers.DataSource := DataModule1.FdsCustomers;
+end;
+
+procedure TFEnquiries.FormDestroy(Sender: TObject);
+begin
+  DataModule1.FTransactions.Filter := '';
+  DataModule1.FTransactions.Filtered := False;
+end;
+
+procedure TFEnquiries.grdCustomersCellClick(Column: TColumn);
+begin
+  if not DataModule1.FCustomers.IsEmpty then
+    LoadTransactions(DataModule1.FCustomers.FieldByName('Account').AsString);
+end;
+
+procedure TFEnquiries.grdCustomersKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+ if not DataModule1.FCustomers.IsEmpty then
+    LoadTransactions(DataModule1.FCustomers.FieldByName('Account').AsString);
+end;
+
+procedure TFEnquiries.LoadTransactions(const Account: string);
+begin
+  grdTransactions.DataSource := DataModule1.FdsTransactions;
+
+
+  DataModule1.FTransactions.Close;
+
+  if Account <> '' then
+  begin
+    DataModule1.FTransactions.Filter := 'Account = ' + QuotedStr(Account);
+    DataModule1.FTransactions.Filtered := True;
+  end;
+
+  DataModule1.FTransactions.Open;
+end;
+
+end.

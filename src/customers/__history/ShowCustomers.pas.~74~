@@ -1,0 +1,187 @@
+unit ShowCustomers;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Data.DB, Vcl.Grids, DataModule, EditCustomer,
+  Vcl.DBGrids;
+
+type
+  TFCustomers = class(TForm)
+    btnAdd: TButton;
+    btnEdit: TButton;
+    btnDelete: TButton;
+    grdCustomers: TDBGrid;
+    Label1: TLabel;
+    edtSearch: TEdit;
+    Label2: TLabel;
+    btnASCSort: TButton;
+    btnDESCSort: TButton;
+    btnCNCLSort: TButton;
+    btnSearch: TButton;
+    procedure FormCreate(Sender: TObject);
+    procedure btnAddClick(Sender: TObject);
+    procedure btnEditClick(Sender: TObject);
+    procedure btnDeleteClick(Sender: TObject);
+    procedure btnASCSortClick(Sender: TObject);
+    procedure btnDESCSortClick(Sender: TObject);
+    procedure btnCNCLSortClick(Sender: TObject);
+    procedure btnSearchClick(Sender: TObject);
+  private
+    function CheckCustomerTransactions(CustomerAccount: String): Integer;
+  public
+  end;
+
+var
+  FCustomers: TFCustomers;
+
+implementation
+
+{$R *.dfm}
+
+procedure TFCustomers.FormCreate(Sender: TObject);
+begin
+  grdCustomers.DataSource := DataModule1.FdsCustomers;
+end;
+
+procedure TFCustomers.btnAddClick(Sender: TObject);
+begin
+  FEditCustomer := TFEditCustomer.Create(nil);
+  try
+    FEditCustomer.Initialize(True);
+    if FEditCustomer.ShowModal = mrOk then
+    begin
+      DataModule1.FCustomers.Refresh;
+    end;
+  finally
+    FEditCustomer.Free;
+  end;
+end;
+
+procedure TFCustomers.btnEditClick(Sender: TObject);
+begin
+  if DataModule1.FCustomers.RecordCount > 0 then
+  begin
+    FEditCustomer := TFEditCustomer.Create(nil);
+    try
+      FEditCustomer.Initialize(False);
+      if FEditCustomer.ShowModal = mrOk then
+      begin
+        DataModule1.FCustomers.Refresh;
+      end;
+    finally
+      FEditCustomer.Free;
+    end;
+  end;
+end;
+
+procedure TFCustomers.btnSearchClick(Sender: TObject);
+begin
+    DataModule1.FCustomers.Close;
+    if edtSearch.Text <> '' then
+      DataModule1.FCustomers.Filter := 'Account =' + QuotedStr(edtSearch.Text)
+    else
+      DataModule1.FCustomers.Filter := '';
+
+    DataModule1.FCustomers.Filtered := True;
+    DataModule1.FCustomers.Open;
+end;
+
+procedure TFCustomers.btnASCSortClick(Sender: TObject);
+begin
+    DataModule1.FCustomers.Sort := 'Name ASC';
+end;
+
+procedure TFCustomers.btnCNCLSortClick(Sender: TObject);
+begin
+    DataModule1.FCustomers.Sort := '';
+end;
+
+function TFCustomers.CheckCustomerTransactions(CustomerAccount: String): Integer;
+begin
+  Result := 0;
+  try
+    DataModule1.FTransactions.Close;
+    DataModule1.FTransactions.Filter := 'Account =' + QuotedStr(CustomerAccount);
+    DataModule1.FTransactions.Filtered := True;
+    DataModule1.FTransactions.Open;
+    Result := DataModule1.FTransactions.RecordCount;
+  except
+    on E: Exception do
+    begin
+      ShowMessage('Error: ' + E.Message);
+    end;
+  end;
+end;
+
+procedure TFCustomers.btnDeleteClick(Sender: TObject);
+var
+  TransactionCount: Integer;
+  CustomerAccount: String;
+begin
+  if DataModule1.FCustomers.RecordCount > 0 then
+  begin
+    CustomerAccount := DataModule1.FCustomers.FieldByName('Account').AsString;
+    TransactionCount := CheckCustomerTransactions(CustomerAccount);
+
+    if TransactionCount > 0 then
+    begin
+      if MessageDlg(Format('This customer has %d transaction(s). Deleting the customer will also delete these transactions. Do you want to continue?', [TransactionCount]),
+                    mtWarning, [mbYes, mbNo], 0) = mrYes then
+      begin
+        try
+          // Delete customer's transactions
+          DataModule1.FTransactions.Close;
+          DataModule1.FTransactions.Filter := 'Account =' + QuotedStr(CustomerAccount);
+          DataModule1.FTransactions.Filtered := True;
+          DataModule1.FTransactions.Open;
+          DataModule1.FTransactions.First;
+          while not DataModule1.FTransactions.Eof do
+          begin
+            DataModule1.FTransactions.Delete;
+          end;
+
+          // Delete customer
+          DataModule1.FCustomers.Delete;
+          DataModule1.FCustomers.Refresh;
+        except
+          on E: Exception do
+          begin
+            ShowMessage('Error: ' + E.Message);
+          end;
+        end;
+      end;
+    end
+    else
+    begin
+      if MessageDlg('Are you sure you want to delete this customer?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+      begin
+        try
+          DataModule1.FCustomers.Delete;
+          DataModule1.FCustomers.Refresh;
+        except
+          on E: Exception do
+          begin
+            ShowMessage('Error: ' + E.Message);
+          end;
+        end;
+      end;
+    end;
+  end;
+end;
+
+procedure TFCustomers.btnDESCSortClick(Sender: TObject);
+begin
+  try
+    DataModule1.FCustomers.Sort := 'Name DESC';
+  except
+    on E: Exception do
+    begin
+      ShowMessage('Error: ' + E.Message);
+    end;
+  end;
+end;
+
+end.
+

@@ -1,0 +1,28 @@
+program Test;
+
+uses
+  Vcl.Forms,
+  Main in 'Main.pas' {FMain},
+  ShowCustomers in 'customers\ShowCustomers.pas' {FCustomers},
+  ShowTransaction in 'transactions\ShowTransaction.pas' {FTransactions},
+  ShowEnquiries in 'enquiries\ShowEnquiries.pas' {FEnquiries},
+  EditCustomer in 'customers\EditCustomer.pas' {FEditCustomer},
+  EditTransaction in 'transactions\EditTransaction.pas' {FEditTransactions},
+  datamodule in 'datamodule\datamodule.pas' {DataModule1: TDataModule},
+  BulkTransactions in 'bulk\BulkTransactions.pas' {FBulk};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TDataModule1, DataModule1);
+  Application.CreateForm(TFMain, FMain);
+  Application.CreateForm(TFCustomers, FCustomers);
+  Application.CreateForm(TFTransactions, FTransactions);
+  Application.CreateForm(TFEnquiries, FEnquiries);
+  Application.CreateForm(TFEditCustomer, FEditCustomer);
+  Application.CreateForm(TFEditTransactions, FEditTransactions);
+  Application.CreateForm(TFBulk, FBulk);
+  Application.Run;
+end.

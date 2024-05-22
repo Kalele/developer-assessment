@@ -1,0 +1,128 @@
+object FTransactions: TFTransactions
+  Left = 0
+  Top = 0
+  Caption = 'Transaction'
+  ClientHeight = 177
+  ClientWidth = 840
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  OnCreate = FormCreate
+  OnShow = FormShow
+  DesignSize = (
+    840
+    177)
+  TextHeight = 15
+  object Label2: TLabel
+    Left = 628
+    Top = 19
+    Width = 69
+    Height = 15
+    Anchors = [akTop, akRight]
+    Caption = 'Sort by date :'
+    ExplicitLeft = 648
+  end
+  object Label1: TLabel
+    Left = 8
+    Top = 19
+    Width = 102
+    Height = 15
+    Caption = 'Search by Account:'
+  end
+  object grdTransactions: TDBGrid
+    Left = 2
+    Top = 46
+    Width = 840
+    Height = 92
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    TabOrder = 0
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+  object btnAdd: TButton
+    Left = 583
+    Top = 144
+    Width = 75
+    Height = 25
+    Anchors = [akRight, akBottom]
+    Caption = 'Add'
+    TabOrder = 1
+    OnClick = btnAddClick
+    ExplicitLeft = 573
+    ExplicitTop = 126
+  end
+  object btnEdit: TButton
+    Left = 664
+    Top = 144
+    Width = 75
+    Height = 25
+    Anchors = [akRight, akBottom]
+    Caption = 'Edit'
+    TabOrder = 2
+    OnClick = btnEditClick
+    ExplicitLeft = 654
+    ExplicitTop = 126
+  end
+  object btnDelete: TButton
+    Left = 763
+    Top = 144
+    Width = 75
+    Height = 25
+    Anchors = [akRight, akBottom]
+    Caption = 'Delete'
+    TabOrder = 3
+    OnClick = btnDeleteClick
+  end
+  object btnCNCLSort: TButton
+    Left = 799
+    Top = 15
+    Width = 31
+    Height = 25
+    Anchors = [akTop, akRight]
+    Caption = 'CNCL'
+    TabOrder = 4
+    OnClick = btnCNCLSortClick
+  end
+  object btnDESCSort: TButton
+    Left = 762
+    Top = 15
+    Width = 31
+    Height = 25
+    Anchors = [akTop, akRight]
+    Caption = 'DESC'
+    TabOrder = 5
+    OnClick = btnDESCSortClick
+  end
+  object btnASCSort: TButton
+    Left = 725
+    Top = 15
+    Width = 31
+    Height = 25
+    Anchors = [akTop, akRight]
+    Caption = 'ASC'
+    TabOrder = 6
+    OnClick = btnASCSortClick
+  end
+  object btnSearch: TButton
+    Left = 463
+    Top = 15
+    Width = 75
+    Height = 25
+    Caption = 'Search'
+    TabOrder = 7
+    OnClick = btnSearchClick
+  end
+  object edtSearch: TEdit
+    Left = 116
+    Top = 17
+    Width = 341
+    Height = 23
+    TabOrder = 8
+  end
+end

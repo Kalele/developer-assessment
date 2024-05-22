@@ -1,0 +1,161 @@
+unit EditCustomer;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Mask, Vcl.ExtCtrls, Datamodule,
+  Vcl.DBCtrls, Data.DB;
+
+type
+  TFEditCustomer = class(TForm)
+    Label1: TLabel;
+    edtName: TDBEdit;
+    Label2: TLabel;
+    edtAccount: TDBEdit;
+    edtBalance: TDBEdit;
+    Label3: TLabel;
+    btnCancel: TButton;
+    btnConfirm: TButton;
+    procedure btnCancelClick(Sender: TObject);
+    procedure btnConfirmClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+  private
+    FIsAddMode: Boolean;
+    procedure GenerateNewAccountNumber;
+    procedure CalculateBalance;
+    function ValidateInputs: Boolean;
+    function AccountNumberExists(const AccountNumber: string): Boolean;
+  public
+    procedure Initialize(AddMode: Boolean);
+  end;
+
+var
+  FEditCustomer: TFEditCustomer;
+
+implementation
+
+{$R *.dfm}
+
+procedure TFEditCustomer.FormCreate(Sender: TObject);
+begin
+  Position := poScreenCenter;
+end;
+
+procedure TFEditCustomer.Initialize(AddMode: Boolean);
+begin
+  FIsAddMode := AddMode;
+  edtName.DataSource := DataModule1.FdsCustomers;
+  edtName.DataField := 'Name';
+  edtAccount.DataSource := DataModule1.FdsCustomers;
+  edtAccount.DataField := 'Account';
+  edtBalance.DataSource := DataModule1.FdsCustomers;
+  edtBalance.DataField := 'Balance';
+
+  edtAccount.ReadOnly := True;
+  edtBalance.ReadOnly := True;
+
+  if FIsAddMode then
+  begin
+    DataModule1.FCustomers.Append;
+    GenerateNewAccountNumber;
+    DataModule1.FCustomers.FieldByName('Balance').AsFloat := 0.0;
+  end
+  else
+  begin
+    DataModule1.FCustomers.Edit;
+    CalculateBalance;
+  end;
+end;
+
+procedure TFEditCustomer.GenerateNewAccountNumber;
+var
+  LastAccountNumber: string;
+  NewAccountNumber: string;
+  NumericPart: Integer;
+begin
+  with DataModule1.ExecuteQuery('SELECT MAX(Account) AS LastAccount FROM Customers') do
+  begin
+    LastAccountNumber := FieldByName('LastAccount').AsString;
+
+    if LastAccountNumber = '' then
+      NumericPart := 1
+    else
+    begin
+      NumericPart := StrToIntDef(Copy(LastAccountNumber, 4, Length(LastAccountNumber) - 3), 0);
+      Inc(NumericPart);
+    end;
+
+    NewAccountNumber := 'ACC' + IntToStr(NumericPart);
+    Close;
+  end;
+
+  DataModule1.FCustomers.FieldByName('Account').AsString := NewAccountNumber;
+end;
+
+procedure TFEditCustomer.CalculateBalance;
+var
+  AccountNumber: string;
+  Balance: Double;
+begin
+  AccountNumber := DataModule1.FCustomers.FieldByName('Account').AsString;
+  Balance := 0.0;
+
+  with DataModule1.ExecuteQuery('SELECT SUM(CASE WHEN DC = ''D'' THEN Amount ELSE -Amount END) AS Balance FROM Transactions WHERE Account = ' + QuotedStr(AccountNumber)) do
+  begin
+    Open;
+    Balance := FieldByName('Balance').AsFloat;
+    Close;
+  end;
+
+  DataModule1.FCustomers.FieldByName('Balance').AsFloat := Balance;
+end;
+
+function TFEditCustomer.AccountNumberExists(const AccountNumber: string): Boolean;
+begin
+  with DataModule1.ExecuteQuery('SELECT COUNT(*) AS Count FROM Customers WHERE Account = ' + QuotedStr(AccountNumber)) do
+  begin
+    Open;
+    Result := FieldByName('Count').AsInteger > 0;
+    Close;
+  end;
+end;
+
+function TFEditCustomer.ValidateInputs: Boolean;
+var
+  AccountNumber: string;
+begin
+  Result := True;
+  AccountNumber := DataModule1.FCustomers.FieldByName('Account').AsString;
+
+  if Trim(DBEdit1.Text) = '' then
+  begin
+    ShowMessage('Name cannot be empty.');
+    Result := False;
+    Exit;
+  end;
+
+  if FIsAddMode and AccountNumberExists(AccountNumber) then
+  begin
+    ShowMessage('Account number already exists. Please try again.');
+    Result := False;
+    Exit;
+  end;
+end;
+
+procedure TFEditCustomer.btnCancelClick(Sender: TObject);
+begin
+  DataModule1.FCustomers.Cancel;
+  Close;
+end;
+
+procedure TFEditCustomer.btnConfirmClick(Sender: TObject);
+begin
+  if ValidateInputs then
+  begin
+    DataModule1.FCustomers.Post;
+    Close;
+  end;
+end;
+
+end.

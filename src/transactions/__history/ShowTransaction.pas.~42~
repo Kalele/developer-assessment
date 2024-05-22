@@ -1,0 +1,49 @@
+procedure PrintGridContents(AGrid: TDBGrid);
+var
+  PrinterCanvas: TCanvas;
+  X, Y, RowHeight, TotalHeight, MaxRowsPerPage, PageNumber, RowIndex: Integer;
+begin
+  PrinterCanvas := Printer.Canvas;
+  Printer.BeginDoc;
+  try
+    // Initialize printing parameters
+    X := Printer.PageWidth div 4;
+    Y := Printer.PageHeight div 4;
+    RowHeight := PrinterCanvas.TextHeight('W'); // Calculate row height based on font size
+    TotalHeight := 0;
+    MaxRowsPerPage := Printer.PageHeight div RowHeight - 2; // Leave space for headers and footers
+    PageNumber := 1;
+
+    // Iterate through grid rows and print
+    for RowIndex := 0 to AGrid.DataSource.DataSet.RecordCount - 1 do
+    begin
+      if TotalHeight + RowHeight > Printer.PageHeight then
+      begin
+        Printer.NewPage;
+        Inc(PageNumber);
+        Y := Printer.PageHeight div 4;
+        TotalHeight := 0;
+      end;
+
+      AGrid.DataSource.DataSet.RecNo := RowIndex + 1;
+      AGrid.PaintTo(PrinterCanvas.Handle, X, Y);
+      Inc(Y, RowHeight);
+      Inc(TotalHeight, RowHeight);
+
+      if (RowIndex + 1) mod MaxRowsPerPage = 0 then
+      begin
+        Printer.NewPage;
+        Inc(PageNumber);
+        Y := Printer.PageHeight div 4;
+        TotalHeight := 0;
+      end;
+    end;
+
+    // Print footer with page number
+    PrinterCanvas.TextOut(X, Printer.PageHeight - RowHeight, 'Page ' + IntToStr(PageNumber));
+
+  finally
+    Printer.EndDoc;
+  end;
+end;
+

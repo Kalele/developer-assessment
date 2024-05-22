@@ -1,0 +1,68 @@
+object FCustomers: TFCustomers
+  Left = 0
+  Top = 0
+  Caption = 'Customers'
+  ClientHeight = 177
+  ClientWidth = 840
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  OnCreate = FormCreate
+  DesignSize = (
+    840
+    177)
+  TextHeight = 15
+  object btnAdd: TButton
+    Left = 555
+    Top = 144
+    Width = 75
+    Height = 25
+    Anchors = [akRight, akBottom]
+    Caption = 'Add'
+    TabOrder = 0
+    OnClick = btnAddClick
+    ExplicitLeft = 545
+    ExplicitTop = 126
+  end
+  object btnEdit: TButton
+    Left = 636
+    Top = 144
+    Width = 75
+    Height = 25
+    Anchors = [akRight, akBottom]
+    Caption = 'Edit'
+    TabOrder = 1
+    OnClick = btnEditClick
+    ExplicitLeft = 626
+    ExplicitTop = 126
+  end
+  object btnDelete: TButton
+    Left = 717
+    Top = 144
+    Width = 75
+    Height = 25
+    Anchors = [akRight, akBottom]
+    Caption = 'Delete'
+    TabOrder = 2
+    OnClick = btnDeleteClick
+    ExplicitLeft = 707
+    ExplicitTop = 126
+  end
+  object grdCustomers: TDBGrid
+    Left = 0
+    Top = 0
+    Width = 840
+    Height = 138
+    Align = alTop
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    TabOrder = 3
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+end

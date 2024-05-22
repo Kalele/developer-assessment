@@ -1,0 +1,223 @@
+unit Datamodule;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Data.DB, Data.Win.ADODB, IniFiles, Winapi.Windows;
+
+type
+  TDataModule1 = class(TDataModule)
+  private
+    procedure CreateComponents;
+    procedure DestroyComponents;
+    procedure ReadConnectionStringFromIni;
+    procedure CreateDatabaseIfNotExists;
+  public
+    FADOConnection: TADOConnection;
+    FQuery: TADOQuery;
+    FCustomers: TADOTable;
+    FTransactions: TADOTable;
+    FdsCustomers: TDataSource;
+    FdsTransactions: TDataSource;
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    function ExecuteQuery(SQL: string): TADOQuery;
+  end;
+
+var
+  DataModule1: TDataModule1;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+constructor TDataModule1.Create(AOwner: TComponent);
+var
+  ErrorMessage: string;
+begin
+  inherited Create(AOwner);
+  try
+    CreateComponents;
+    CreateDatabaseIfNotExists;
+    FCustomers.Active := True;
+    FTransactions.Active := True;
+  except
+    on E: Exception do
+    begin
+      ErrorMessage := 'Error: Failed to establish database connection: ' + E.Message;
+      MessageBox(0, PChar(ErrorMessage), 'Error', MB_ICONERROR or MB_OK);
+    end;
+  end;
+end;
+
+destructor TDataModule1.Destroy;
+begin
+  FCustomers.Active := False;
+  FTransactions.Active := False;
+  DestroyComponents;
+  inherited Destroy;
+end;
+
+procedure TDataModule1.CreateComponents;
+begin
+  FADOConnection := TADOConnection.Create(Self);
+  ReadConnectionStringFromIni;
+  with FADOConnection do
+  begin
+    Name := 'ADOConnection';
+    LoginPrompt := False;
+  end;
+
+  FCustomers := TADOTable.Create(Self);
+  with FCustomers do
+  begin
+    Name := 'Customers';
+    Connection := FADOConnection;
+    TableName := 'Customers';
+  end;
+
+  FTransactions := TADOTable.Create(Self);
+  with FTransactions do
+  begin
+    Name := 'Transactions';
+    Connection := FADOConnection;
+    TableName := 'Transactions';
+  end;
+
+  FdsCustomers := TDataSource.Create(Self);
+  with FdsCustomers do
+  begin
+    Name := 'dsCustomers';
+    DataSet := FCustomers;
+  end;
+
+  FdsTransactions := TDataSource.Create(Self);
+  with FdsTransactions do
+  begin
+    Name := 'dsTransactions';
+    DataSet := FTransactions;
+  end;
+
+  FQuery := TADOQuery.Create(Self);
+  with FQuery do
+  begin
+    Name := 'Query';
+    Connection := FADOConnection;
+  end;
+end;
+
+procedure TDataModule1.DestroyComponents;
+begin
+  FQuery.Free;
+  FdsTransactions.Free;
+  FdsCustomers.Free;
+  FTransactions.Free;
+  FCustomers.Free;
+  FADOConnection.Free;
+end;
+
+function TDataModule1.ExecuteQuery(SQL: string): TADOQuery;
+begin
+  FQuery.Close;
+  FQuery.SQL.Text := SQL;
+  FQuery.Open;
+  Result := FQuery;
+end;
+
+procedure TDataModule1.ReadConnectionStringFromIni;
+var
+  IniFile: TIniFile;
+begin
+  IniFile := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'settings.ini');
+  try
+    FADOConnection.ConnectionString :=
+      Format('Provider=SQLOLEDB.1;Persist Security Info=False;User ID=%s;Password=%s;Initial Catalog=TestDB;Data Source=%s;' +
+             'Use Procedure for Prepare=1;Auto Translate=True;Packet Size=4096;Workstation ID=DESKTOP-HMDQ685;' +
+             'Use Encryption for Data=False;Tag with column collation when possible=False;',
+             [IniFile.ReadString('Database', 'User', ''),
+              IniFile.ReadString('Database', 'Password', ''),
+              IniFile.ReadString('Database', 'DataSource', '')]);
+  except
+    on E: Exception do
+    begin
+      raise Exception.Create('Failed to read database properties from settings.ini: ' + E.Message);
+    end;
+  end;
+  IniFile.Free;
+end;
+
+
+procedure TDataModule1.CreateDatabaseIfNotExists;
+var
+  IniFile: TIniFile;
+  ADOCmd: TADOCommand;
+  DataSource, User, Password: string;
+begin
+  IniFile := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'settings.ini');
+  try
+    DataSource := IniFile.ReadString('Database', 'DataSource', '');
+    User := IniFile.ReadString('Database', 'User', '');
+    Password := IniFile.ReadString('Database', 'Password', '');
+
+    FADOConnection.ConnectionString :=
+      Format('Provider=SQLOLEDB.1;Persist Security Info=False;User ID=%s;Password=%s;Initial Catalog=master;Data Source=%s;' +
+             'Use Procedure for Prepare=1;Auto Translate=True;Packet Size=4096;Workstation ID=DESKTOP-HMDQ685;' +
+             'Use Encryption for Data=False;Tag with column collation when possible=False;',
+             [User, Password, DataSource]);
+
+    FADOConnection.Open;
+
+    ADOCmd := TADOCommand.Create(nil);
+    try
+      ADOCmd.Connection := FADOConnection;
+
+      ADOCmd.CommandText := 'IF DB_ID(''TestDB'') IS NULL CREATE DATABASE TestDB';
+      ADOCmd.Execute;
+
+      ADOCmd.CommandText := 'USE TestDB';
+      ADOCmd.Execute;
+
+      ADOCmd.CommandText :=
+        'IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ''Customers'') ' +
+        'CREATE TABLE Customers (' +
+        'Account varchar(15) PRIMARY KEY,' +
+        'Name varchar(30),' +
+        'Balance decimal(18, 2)' +
+        ')';
+      ADOCmd.Execute;
+
+      ADOCmd.CommandText :=
+        'IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ''Transactions'') ' +
+        'CREATE TABLE Transactions (' +
+        'Number int IDENTITY(1,1) PRIMARY KEY,' +
+        'Account varchar(15),' +
+        'Date datetime,' +
+        'Amount decimal(18, 2),' +
+        'DC char(1),' +
+        'FOREIGN KEY (Account) REFERENCES Customers(Account)' +
+        ')';
+      ADOCmd.Execute;
+    finally
+      ADOCmd.Free;
+    end;
+
+    FADOConnection.Close;
+
+    FADOConnection.ConnectionString :=
+      Format('Provider=SQLOLEDB.1;Persist Security Info=False;User ID=%s;Password=%s;Initial Catalog=TestDB;Data Source=%s;' +
+             'Use Procedure for Prepare=1;Auto Translate=True;Packet Size=4096;Workstation ID=DESKTOP-HMDQ685;' +
+             'Use Encryption for Data=False;Tag with column collation when possible=False;',
+             [User, Password, DataSource]);
+  except
+    on E: Exception do
+    begin
+      raise Exception.Create('Failed to create database TestDB or tables: ' + E.Message);
+    end;
+  end;
+  IniFile.Free;
+end;
+
+end.
+

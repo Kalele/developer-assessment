@@ -1,0 +1,184 @@
+unit ShowTransaction;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Data.DB, Vcl.Grids,
+  Datamodule, EditTransaction, Vcl.DBGrids, Printers; // Add Printers unit here
+
+type
+  TFTransactions = class(TForm)
+    grdTransactions: TDBGrid;
+    btnAdd: TButton;
+    btnEdit: TButton;
+    btnDelete: TButton;
+    btnCNCLSort: TButton;
+    btnDESCSort: TButton;
+    btnASCSort: TButton;
+    Label2: TLabel;
+    btnSearch: TButton;
+    edtSearch: TEdit;
+    Label1: TLabel;
+    Button1: TButton;
+    procedure btnAddClick(Sender: TObject);
+    procedure btnEditClick(Sender: TObject);
+    procedure btnDeleteClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure btnASCSortClick(Sender: TObject);
+    procedure btnDESCSortClick(Sender: TObject);
+    procedure btnCNCLSortClick(Sender: TObject);
+    procedure btnSearchClick(Sender: TObject);
+    procedure btnPrintClick(Sender: TObject); // Event handler for printing
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FTransactions: TFTransactions;
+
+implementation
+
+{$R *.dfm}
+
+procedure TFTransactions.FormCreate(Sender: TObject);
+begin
+  grdTransactions.DataSource := DataModule1.FdsTransactions;
+end;
+
+procedure TFTransactions.FormShow(Sender: TObject);
+begin
+  DataModule1.FTransactions.Filtered := False;
+end;
+
+procedure TFTransactions.btnASCSortClick(Sender: TObject);
+begin
+  DataModule1.FTransactions.Sort := 'Date ASC';
+end;
+
+procedure TFTransactions.btnCNCLSortClick(Sender: TObject);
+begin
+  DataModule1.FTransactions.Sort := '';
+end;
+
+procedure TFTransactions.btnDeleteClick(Sender: TObject);
+begin
+  if DataModule1.FTransactions.RecordCount > 0 then
+  begin
+    if MessageDlg('Are you sure you want to delete this transaction?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      DataModule1.FTransactions.Delete;
+      DataModule1.FTransactions.Refresh;
+    end;
+  end;
+end;
+
+procedure TFTransactions.btnDESCSortClick(Sender: TObject);
+begin
+  DataModule1.FTransactions.Sort := 'Date DESC';
+end;
+
+procedure TFTransactions.btnEditClick(Sender: TObject);
+begin
+  if DataModule1.FTransactions.RecordCount > 0 then
+  begin
+    FEditTransactions := TFEditTransactions.Create(nil);
+    try
+      FEditTransactions.Initialize(False);
+      if FEditTransactions.ShowModal = mrOk then
+      begin
+        DataModule1.FTransactions.Refresh;
+      end;
+    finally
+      FEditTransactions.Free;
+    end;
+  end;
+end;
+
+procedure TFTransactions.btnSearchClick(Sender: TObject);
+begin
+  DataModule1.FTransactions.Close;
+  if edtSearch.Text <> '' then
+    DataModule1.FTransactions.Filter := 'Account =' + QuotedStr(edtSearch.Text)
+  else
+    DataModule1.FTransactions.Filter := '';
+
+  DataModule1.FTransactions.Filtered := True;
+  DataModule1.FTransactions.Open;
+end;
+
+procedure TFTransactions.btnAddClick(Sender: TObject);
+begin
+  FEditTransactions := TFEditTransactions.Create(nil);
+  try
+    FEditTransactions.Initialize(True);
+    if FEditTransactions.ShowModal = mrOk then
+    begin
+      DataModule1.FTransactions.Refresh;
+    end;
+  finally
+    FEditTransactions.Free;
+  end;
+end;
+
+procedure PrintGridContents(AGrid: TDBGrid);
+var
+  PrinterCanvas: TCanvas;
+  X, Y, RowHeight, TotalHeight, MaxRowsPerPage, PageNumber, RowIndex: Integer;
+begin
+  PrinterCanvas := Printer.Canvas;
+  Printer.BeginDoc;
+  try
+    // Initialize printing parameters
+    X := Printer.PageWidth div 4;
+    Y := Printer.PageHeight div 4;
+    RowHeight := AGrid.DefaultRowHeight;
+    TotalHeight := 0;
+    MaxRowsPerPage := Printer.PageHeight div RowHeight - 2; // Leave space for headers and footers
+    PageNumber := 1;
+
+    // Iterate through grid rows and print
+    for RowIndex := 0 to AGrid.DataSource.DataSet.RecordCount - 1 do
+    begin
+      if TotalHeight + RowHeight > Printer.PageHeight then
+      begin
+        Printer.NewPage;
+        Inc(PageNumber);
+        Y := Printer.PageHeight div 4;
+        TotalHeight := 0;
+      end;
+
+      AGrid.DataSource.DataSet.RecNo := RowIndex + 1;
+      AGrid.PaintTo(PrinterCanvas.Handle, X, Y);
+      Inc(Y, RowHeight);
+      Inc(TotalHeight, RowHeight);
+
+      if (RowIndex + 1) mod MaxRowsPerPage = 0 then
+      begin
+        Printer.NewPage;
+        Inc(PageNumber);
+        Y := Printer.PageHeight div 4;
+        TotalHeight := 0;
+      end;
+    end;
+
+    // Print footer with page number
+    PrinterCanvas.TextOut(X, Printer.PageHeight - RowHeight, 'Page ' + IntToStr(PageNumber));
+
+  finally
+    Printer.EndDoc;
+  end;
+end;
+
+// Event handler for printing button
+procedure TFTransactions.btnPrintClick(Sender: TObject);
+begin
+  // Call the procedure to print grid contents
+  PrintGridContents(grdTransactions);
+end;
+
+end.
+

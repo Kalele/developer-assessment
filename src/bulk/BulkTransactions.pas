@@ -1,0 +1,161 @@
+unit BulkTransactions;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Data.DB,
+  Datamodule, Vcl.ExtDlgs;
+
+type
+  TFBulk = class(TForm)
+    Label1: TLabel;
+    edtImport: TEdit;
+    btnImport: TButton;
+    mmImport: TMemo;
+    OpenDialog1: TOpenDialog;
+    procedure btnImportClick(Sender: TObject);
+    procedure edtImportDblClick(Sender: TObject);
+  private
+    function ValidateCSVFormat(const FileName: string): Boolean;
+    function PersistTransactions(const FileName: string): Boolean;
+    procedure UpdateCustomerBalance(const AccountNumber: string);
+  public
+  end;
+
+var
+  FBulk: TFBulk;
+
+implementation
+
+{$R *.dfm}
+
+procedure TFBulk.btnImportClick(Sender: TObject);
+var
+  FilePath: string;
+begin
+  if edtImport.Text = '' then
+    if OpenDialog1.Execute then
+      edtImport.Text := OpenDialog1.FileName;
+
+  FilePath := edtImport.Text;
+
+  if ValidateCSVFormat(FilePath) then
+  begin
+    if PersistTransactions(FilePath) then
+      ShowMessage('Transactions imported successfully.')
+    else
+      ShowMessage('Failed to import transactions.');
+  end
+  else
+    ShowMessage('Invalid CSV format.');
+end;
+
+function TFBulk.ValidateCSVFormat(const FileName: string): Boolean;
+var
+  CSVFile: TStringList;
+  Line: string;
+begin
+  Result := False;
+  CSVFile := TStringList.Create;
+  try
+    CSVFile.LoadFromFile(FileName);
+    if CSVFile.Count > 0 then
+    begin
+      Line := CSVFile[0];
+      if SameText(Line, 'Account,Date,Amount,DC') then
+        Result := True;
+    end;
+  finally
+    CSVFile.Free;
+  end;
+end;
+
+procedure TFBulk.edtImportDblClick(Sender: TObject);
+begin
+  if OpenDialog1.Execute then
+    edtImport.Text := OpenDialog1.FileName;
+end;
+
+function TFBulk.PersistTransactions(const FileName: string): Boolean;
+var
+  CSVFile: TStringList;
+  i: Integer;
+  Line, Account, DateStr, AmountStr, DC: string;
+begin
+  Result := False;
+  CSVFile := TStringList.Create;
+  mmImport.Text := '';
+  try
+    CSVFile.LoadFromFile(FileName);
+    DataModule1.FADOConnection.BeginTrans;
+    try
+      for i := 1 to CSVFile.Count - 1 do
+      begin
+        Line := CSVFile[i];
+        Account := Trim(Copy(Line, 1, Pos(',', Line) - 1));
+        Delete(Line, 1, Pos(',', Line));
+        DateStr := Trim(Copy(Line, 1, Pos(',', Line) - 1));
+        Delete(Line, 1, Pos(',', Line));
+        AmountStr := Trim(Copy(Line, 1, Pos(',', Line) - 1));
+        Delete(Line, 1, Pos(',', Line));
+        DC := Trim(Line);
+
+        DataModule1.FQuery.SQL.Text := 'SELECT COUNT(*) FROM Customers WHERE Account = :Account';
+        DataModule1.FQuery.Parameters.ParamByName('Account').Value := Account;
+        DataModule1.FQuery.Open;
+
+        if DataModule1.FQuery.Fields[0].AsInteger > 0 then
+        begin
+          DataModule1.FTransactions.Append;
+          DataModule1.FTransactions.FieldByName('Account').AsString := Account;
+          DataModule1.FTransactions.FieldByName('Date').AsDateTime := StrToDate(DateStr);
+          DataModule1.FTransactions.FieldByName('Amount').AsFloat := StrToFloat(AmountStr);
+          DataModule1.FTransactions.FieldByName('DC').AsString := DC;
+          DataModule1.FTransactions.Post;
+          mmImport.Lines.Add(Account + '--' + DateStr + '--' + AmountStr + '--' + DC + '... IMPORTED.');
+
+          UpdateCustomerBalance(Account);
+        end
+        else
+          mmImport.Lines.Add(Account + '--' + DateStr + '--' + AmountStr + '--' + DC + '... NOT IMPORTED, ACCOUNT DOESN''T EXIST.');
+
+        DataModule1.FQuery.Close;
+      end;
+      DataModule1.FADOConnection.CommitTrans;
+      Result := True;
+    except
+      DataModule1.FADOConnection.RollbackTrans;
+    end;
+  finally
+    CSVFile.Free;
+  end;
+end;
+
+procedure TFBulk.UpdateCustomerBalance(const AccountNumber: string);
+var
+  Balance: Double;
+begin
+  Balance := 0.0;
+
+  with DataModule1.ExecuteQuery('SELECT SUM(CASE WHEN DC = ''D'' THEN Amount ELSE -Amount END) AS Balance FROM Transactions WHERE Account = ' + QuotedStr(AccountNumber)) do
+  begin
+    Open;
+    Balance := FieldByName('Balance').AsFloat;
+    Close;
+  end;
+
+  with DataModule1.ExecuteQuery('SELECT * FROM Customers WHERE Account = ' + QuotedStr(AccountNumber)) do
+  begin
+    Open;
+    if not Eof then
+    begin
+      Edit;
+      FieldByName('Balance').AsFloat := Balance;
+      Post;
+    end;
+    Close;
+  end;
+end;
+
+end.
